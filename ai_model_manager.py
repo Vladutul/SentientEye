@@ -48,8 +48,14 @@ class YoloObjectDetector:
                 for r in results:
                     for box in r.boxes:
                         confidence_score = float(box.conf[0])
+                        nume_obiect = r.names[int(box.cls[0])]
+
+                        # ---> PRINT-UL ADĂUGAT AICI <---
+                        # Afișează numele și încrederea (formatată la 2 zecimale)
+                        print(f"[DETECȚIE] Obiect: {nume_obiect} | Încredere: {confidence_score:.2f}")
+
                         new_detection.append({
-                            "nume": r.names[int(box.cls[0])],
+                            "nume": nume_obiect,
                             "coord": box.xyxy[0].cpu().numpy().astype(int),
                             "confidence": confidence_score
                         })
