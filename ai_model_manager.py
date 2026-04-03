@@ -7,7 +7,7 @@ import RPi.GPIO as GPIO
 import time
 
 class YoloObjectDetector:
-    def __init__(self, model_path: str = "yolov8n.pt", confidence_threshold: float = 0.50, buzzer_pin: int = 13):
+    def __init__(self, model_path: str = "yolov8n.pt", confidence_threshold: float = 0.50):
         self.model_path = model_path
         self.confidence_threshold = confidence_threshold
         self.frame_queue = queue.Queue(maxsize=1)
@@ -15,16 +15,6 @@ class YoloObjectDetector:
         self.running_state = False
         self.thread: threading.Thread | None = None
         
-        # --- NOU: Flag pentru a preveni spam-ul de thread-uri pe buzzer ---
-        self.is_buzzing = False 
-
-        # Setup GPIO buzzer
-        GPIO.setmode(GPIO.BCM)
-        self.buzzer_pin = buzzer_pin
-        GPIO.setup(self.buzzer_pin, GPIO.OUT)
-        self.pwm_signal = GPIO.PWM(self.buzzer_pin, 1000)
-        self.pwm_signal.start(0)  # 0% duty cycle (buzzer off)
-
     def start(self) -> None:
         self.change_running_state(True)
         self.thread = threading.Thread(target=self._worker_loop, daemon=True)
@@ -77,7 +67,6 @@ class YoloObjectDetector:
                             # Buzzer-ul se activează DOAR pentru "close" cu încredere > 0.40
                             if nume_obiect == "close" and confidence_score > 0.60:
                                 pass
-                                #self._buzz_for_duration(1.0)
 
                     self.current_detections = new_detection
 
@@ -97,20 +86,3 @@ class YoloObjectDetector:
 
     def change_running_state(self, state: bool):
         self.running_state = state
-
-    def _buzz_for_duration(self, duration: float):
-        """Activează buzzerul doar dacă nu este deja activ, pentru a preveni blocajele de CPU."""
-        
-        # --- NOU: Dacă buzzerul deja sună, ignorăm comanda nouă ---
-        if self.is_buzzing:
-            return 
-            
-        def beep_task():
-            self.is_buzzing = True
-            self.pwm_signal.ChangeDutyCycle(50)  # Pornim buzzerul
-            time.sleep(duration)
-            self.pwm_signal.ChangeDutyCycle(0)   # Oprim buzzerul
-            self.is_buzzing = False              # Eliberăm flag-ul
-            
-        # Lansăm funcția de beep într-un thread separat
-        threading.Thread(target=beep_task, daemon=True).start()
