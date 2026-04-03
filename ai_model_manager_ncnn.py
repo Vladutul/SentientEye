@@ -83,52 +83,81 @@ class NcnnYoloDetector:
 
                 # 2. INFERENȚA
                 ex = net.create_extractor()
-                
                 ex.input("in0", mat_in) 
-                ret, mat_out = ex.extract("out0")
+                ret, mat_out = ex.extract("out0") 
 
-                # 3. PROCESAREA REZULTATELOR
+                # --- 3. PROCESAREA REZULTATELOR (DECODOR YOLOv8) ---
                 new_detection = []
                 
-                # Cazul ideal: modelul returnează o matrice de tip [num_detectii, 6] 
-                # (label, confidence, x1, y1, x2, y2)
-                if mat_out is not None and mat_out.h > 0:
-                    for i in range(mat_out.h):
-                        values = mat_out.row(i)
+                if mat_out is not None:
+                    # Convertim ieșirea brută în matrice numpy (Forma tipică: 6 rânduri, 8400 coloane)
+                    out = np.array(mat_out)
+                    
+                    # Dacă matricea e "culcată" (6, 8400), o întoarcem (8400, 6) pentru a o citi ușor
+                    if len(out.shape) == 2 and out.shape[0] < out.shape[1]:
+                        out = out.T
                         
-                        label_id = int(values[0])
-                        confidence_score = float(values[1])
+                    if len(out) > 0:
+                        # Extragem datele
+                        boxes = out[:, :4]  # Primele 4 coloane: cx, cy, w, h
+                        scores = out[:, 4:] # Următoarele coloane: încrederea pt "close" și "open"
                         
-                        if confidence_score < self.confidence_threshold:
-                            continue
-
-                        # Coordonatele vin raportate la dimensiunea de intrare (self.input_size)
-                        # Trebuie să le scalăm înapoi la rezoluția camerei (w_orig, h_orig)
-                        x1 = int(values[2] * w_orig / self.input_size)
-                        y1 = int(values[3] * h_orig / self.input_size)
-                        x2 = int(values[4] * w_orig / self.input_size)
-                        y2 = int(values[5] * h_orig / self.input_size)
-
-                        nume_obiect = self.class_names.get(label_id, f"Clasa_{label_id}")
-
-                        # --- AFIȘĂRI DISTINCTE ---
-                        #if nume_obiect == "open":
-                        #    print(f"🟢 [NCNN] OPEN detectat | Încredere: {confidence_score:.2f}")
-                        #elif nume_obiect == "close":
-                        #    print(f"🔴 [NCNN] CLOSE detectat | Încredere: {confidence_score:.2f}")
-                        #else:
-                        #    print(f"⚪ [NCNN] {nume_obiect} | Încredere: {confidence_score:.2f}")
-
-                        new_detection.append({
-                            "nume": nume_obiect,
-                            "coord": (x1, y1, x2, y2),
-                            "confidence": confidence_score
-                        })
-
-                        # Buzzer-ul se activează DOAR pentru "close" cu încredere > 0.40
-                        if nume_obiect == "close" and confidence_score > 0.40:
-                            self._buzz_for_duration(1.0)
-
+                        # Găsim clasa câștigătoare pentru fiecare din cele 8400 de cutii
+                        class_ids = np.argmax(scores, axis=1)
+                        max_scores = np.max(scores, axis=1)
+                        
+                        # Filtrăm DOAR cutiile care depășesc pragul de încredere setat de tine
+                        mask = max_scores > self.confidence_threshold
+                        filtered_boxes = boxes[mask]
+                        filtered_scores = max_scores[mask]
+                        filtered_class_ids = class_ids[mask]
+                        
+                        # Transformăm din (Centru_X, Centru_Y, Lățime, Înălțime) în variabile separate
+                        cx = filtered_boxes[:, 0]
+                        cy = filtered_boxes[:, 1]
+                        w = filtered_boxes[:, 2]
+                        h = filtered_boxes[:, 3]
+                        
+                        # Scalăm coordonatele înapoi la rezoluția camerei tale (w_orig, h_orig)
+                        x1_arr = (cx - w / 2) * (w_orig / self.input_size)
+                        y1_arr = (cy - h / 2) * (h_orig / self.input_size)
+                        w_arr = w * (w_orig / self.input_size)
+                        h_arr = h * (h_orig / self.input_size)
+                        
+                        # Aplicăm NMS (Non-Maximum Suppression) pentru a șterge cutiile dublate
+                        bboxes_for_nms = []
+                        for i in range(len(x1_arr)):
+                            bboxes_for_nms.append([int(x1_arr[i]), int(y1_arr[i]), int(w_arr[i]), int(h_arr[i])])
+                            
+                        indices = cv2.dnn.NMSBoxes(
+                            bboxes=bboxes_for_nms,
+                            scores=filtered_scores.tolist(),
+                            score_threshold=self.confidence_threshold,
+                            nms_threshold=0.45  # Elimină suprapunerile mai mari de 45%
+                        )
+                        
+                        # Dacă au rămas cutii valide după NMS, le trimitem la desenat!
+                        if len(indices) > 0:
+                            for idx in indices.flatten():
+                                final_x1 = int(x1_arr[idx])
+                                final_y1 = int(y1_arr[idx])
+                                final_x2 = final_x1 + int(w_arr[idx])
+                                final_y2 = final_y1 + int(h_arr[idx])
+                                
+                                score = filtered_scores[idx]
+                                class_id = filtered_class_ids[idx]
+                                nume_obiect = self.class_names.get(class_id, f"Clasa_{class_id}")
+                                
+                                new_detection.append({
+                                    "nume": f"{nume_obiect} {score:.2f}",
+                                    "coord": (final_x1, final_y1, final_x2, final_y2),
+                                    "confidence": score
+                                })
+                                
+                                # Logica ta de buzzer
+                                if nume_obiect == "close" and score > 0.40:
+                                    self._buzz_for_duration(1.0)
+                                    
                 self.current_detections = new_detection
 
             except queue.Empty:
