@@ -52,7 +52,7 @@ class YoloObjectDetector:
                     
                     # --- MODIFICARE CRITICĂ AICI ---
                     # Setăm conf=0.20 ca să nu mai filtreze scorurile de 0.30 sau 0.40 înainte să le vedem
-                    results = model(frame, conf=0.20, verbose=False)
+                    results = model(frame, conf=0.50, verbose=False)
 
                     new_detection = []
                     for r in results:
@@ -75,7 +75,7 @@ class YoloObjectDetector:
                             })
 
                             # Buzzer-ul se activează DOAR pentru "close" cu încredere > 0.40
-                            if nume_obiect == "close" and confidence_score > 0.40:
+                            if nume_obiect == "close" and confidence_score > 0.60:
                                 pass
                                 #self._buzz_for_duration(1.0)
 
