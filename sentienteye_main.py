@@ -92,7 +92,7 @@ class SentientEye:
 # 3. Asamblarea aplicației se face la exterior (Compozitie)
 if __name__ == "__main__":
     from camera_manager import PiCamera 
-    from ai_model_manager import NcnnYoloDetector  # <-- Importăm noua clasă
+    from ai_model_manager_ncnn import NcnnYoloDetector  # <-- Importăm noua clasă
     
     # 1. Punem calea EXACTĂ către cele două fișiere din folderul generat de Ultralytics
     PARAM_PATH = "face_model_ncnn_model/model_ncnn.param" # Verifică numele exact din folder!
