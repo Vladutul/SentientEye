@@ -106,7 +106,7 @@ if __name__ == "__main__":
         param_path=PARAM_PATH, 
         bin_path=BIN_PATH, 
         input_size=640,  # Pune 320 aici dacă ai exportat modelul la 320x320 cum am discutat!
-        confidence_threshold=0.25,
+        confidence_threshold=0.50,
         buzzer_pin=13
     )
     
