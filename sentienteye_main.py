@@ -91,17 +91,25 @@ class SentientEye:
 
 # 3. Asamblarea aplicației se face la exterior (Compozitie)
 if __name__ == "__main__":
-    from camera_manager import PiCamera # Implementarea concretă
-    from ai_model_manager import YoloObjectDetector     # Implementarea concretă
+    from camera_manager import PiCamera 
+    from ai_model_manager import NcnnYoloDetector  # <-- Importăm noua clasă
     
-    MODEL_PATH = "face_model_ncnn_model"
-
-    # Aici poți schimba ușor cu:
-    # camera = IpCameraManager("192.168.1.100")
-    # model = MediaPipeWorker()
+    # 1. Punem calea EXACTĂ către cele două fișiere din folderul generat de Ultralytics
+    PARAM_PATH = "face_model_ncnn_model/model_ncnn.param" # Verifică numele exact din folder!
+    BIN_PATH = "face_model_ncnn_model/model_ncnn.bin"     # Verifică numele exact din folder!
     
+    # 2. Instanțiem camera
     my_camera = PiCamera(width=1920, height=1080, inverted_state=True)
-    my_model = YoloObjectDetector(model_path=MODEL_PATH, confidence_threshold=0.15)
     
+    # 3. Instanțiem modelul brut NCNN
+    my_model = NcnnYoloDetector(
+        param_path=PARAM_PATH, 
+        bin_path=BIN_PATH, 
+        input_size=640,  # Pune 320 aici dacă ai exportat modelul la 320x320 cum am discutat!
+        confidence_threshold=0.25,
+        buzzer_pin=13
+    )
+    
+    # 4. Injectăm și rulăm aplicația (Nu se schimbă absolut nimic în logica SentientEye!)
     app = SentientEye(camera=my_camera, model=my_model)
     app.run()
