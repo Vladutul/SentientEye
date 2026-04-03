@@ -29,37 +29,37 @@ class SentientEye:
         self.start_components()
         self.set_running_state(True)
         
-        time.sleep(3)
-        print("--- RUNTIME: Sistemul rulează (Apasă ESC pentru ieșire) ---")
-
-        # 1. Creăm fereastra și o setăm pe Full Screen chiar de la început
+        # Un mic delay pentru a lăsa camera să se stabilizeze (auto-exposure)
+        time.sleep(2)
+        
         cv2.namedWindow("Sentient Eye", cv2.WINDOW_NORMAL)
         cv2.setWindowProperty("Sentient Eye", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
         try:
             while self.running_state:
-                # framel vine deja procesat și orientat corect din obiectul camerei
                 frame = self.camera.get_frame()
                 
-                if frame is not None:
-                    # Dacă ecranul tău stă pe orizontală (landscape), s-ar putea să nu mai ai 
-                    # nevoie de rotația de 90 de grade. Dacă stă pe verticală, las-o.
-                    frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
+                if frame is None:
+                    continue
 
-                    # Trimitem frame-ul la modelul AI înainte de resize 
-                    # (pentru ca AI-ul să proceseze imaginea la calitatea ei originală)
-                    self.model.push_frame(frame.copy())
-                    detectii = self.model.get_detections()
+                # 1. Rotația - esențială dacă camera e montată fizic la 90 grade
+                frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
+
+                # 2. AI Inference
+                # Notă: Asigură-te că NcnnYoloDetector redimensionează intern la 320/640
+                self.model.push_frame(frame) 
+                detectii = self.model.get_detections()
+                
+                # 3. Desenăm pe frame-ul de rezoluție mare (pentru acuratețea liniilor)
+                if detectii:
                     self._draw_detections(frame, detectii)
-                    
-                    # --- STRETCH PE TOATĂ SUPRAFAȚA ECRANULUI ---
-                    # Forțăm rezoluția la 800 lățime și 480 înălțime
-                    frame = cv2.resize(frame, (800, 480))
-                    
-                    cv2.imshow("Sentient Eye", frame)
+                
+                # 4. Resize final pentru display-ul de 800x480
+                display_frame = cv2.resize(frame, (800, 480))
+                
+                cv2.imshow("Sentient Eye", display_frame)
 
-                if cv2.waitKey(1) & 0xFF == 27:
-                    self.set_running_state(False)
+                if cv2.waitKey(1) & 0xFF == 27: # ESC
                     break
         finally:
             self.cleanup()
