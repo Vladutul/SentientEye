@@ -95,8 +95,8 @@ if __name__ == "__main__":
     from ai_model_manager_ncnn import NcnnYoloDetector  # <-- Importăm noua clasă
     
     # 1. Punem calea EXACTĂ către cele două fișiere din folderul generat de Ultralytics
-    PARAM_PATH = "face_model_ncnn_model/model_ncnn.param" # Verifică numele exact din folder!
-    BIN_PATH = "face_model_ncnn_model/model_ncnn.bin"     # Verifică numele exact din folder!
+    PARAM_PATH = "face_model_ncnn_model/model.ncnn.param" 
+    BIN_PATH = "face_model_ncnn_model/model.ncnn.bin"
     
     # 2. Instanțiem camera
     my_camera = PiCamera(width=1920, height=1080, inverted_state=True)
