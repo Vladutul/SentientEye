@@ -12,7 +12,7 @@ class NcnnYoloDetector:
                  param_path: str = "model.param", 
                  bin_path: str = "model.bin", 
                  input_size: int = 640, # Dimensiunea la care a fost antrenat modelul (ex: 640 pt YOLO)
-                 confidence_threshold: float = 0.20, 
+                 confidence_threshold: float = 0.50, 
                  buzzer_pin: int = 13):
         
         self.param_path = param_path
