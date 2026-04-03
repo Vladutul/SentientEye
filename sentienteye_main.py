@@ -100,7 +100,7 @@ if __name__ == "__main__":
     # camera = IpCameraManager("192.168.1.100")
     # model = MediaPipeWorker()
     
-    my_camera = PiCamera(width=500, height=1100, inverted_state=True)
+    my_camera = PiCamera(width=800, height=1000, inverted_state=True)
     my_model = YoloObjectDetector(model_path=MODEL_PATH, confidence_threshold=0.30)
     
     app = SentientEye(camera=my_camera, model=my_model)
