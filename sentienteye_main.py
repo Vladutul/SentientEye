@@ -101,7 +101,7 @@ if __name__ == "__main__":
     # model = MediaPipeWorker()
     
     my_camera = PiCamera(width=1920, height=1080, inverted_state=True)
-    my_model = YoloObjectDetector(model_path=MODEL_PATH, confidence_threshold=0.15)
+    my_model = YoloObjectDetector(model_path=MODEL_PATH, confidence_threshold=0.50)
     
     app = SentientEye(camera=my_camera, model=my_model)
     app.run()
