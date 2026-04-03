@@ -11,7 +11,7 @@ class NcnnYoloDetector:
     def __init__(self, 
                  param_path: str = "model.param", 
                  bin_path: str = "model.bin", 
-                 input_size: int = 460, # Dimensiunea la care a fost antrenat modelul (ex: 640 pt YOLO)
+                 input_size: int = 640, # Dimensiunea la care a fost antrenat modelul (ex: 640 pt YOLO)
                  confidence_threshold: float = 0.50, 
                  buzzer_pin: int = 13):
         
