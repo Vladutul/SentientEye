@@ -91,17 +91,15 @@ class SentientEye:
 
 # 3. Asamblarea aplicației se face la exterior (Compozitie)
 if __name__ == "__main__":
-    from camera_manager import PiCamera # Implementarea concretă
-    from ai_model_manager import YoloObjectDetector     # Implementarea concretă
-    
-    MODEL_PATH = "face_model.pt"
-
-    # Aici poți schimba ușor cu:
-    # camera = IpCameraManager("192.168.1.100")
-    # model = MediaPipeWorker()
+    from camera_manager import PiCamera 
+    # from ai_model_manager import YoloObjectDetector  <-- Nu mai avem nevoie
+    from media_pipe_worker import MediaPipeWorker
     
     my_camera = PiCamera(width=1920, height=1080, inverted_state=True)
-    my_model = YoloObjectDetector(model_path=MODEL_PATH, confidence_threshold=0.15)
+    
+    # Setăm noul model de Face Mesh. 
+    # Poți ajusta ear_threshold dacă observi că ochii tăi sunt detectați ca "închiși" prea repede.
+    my_model = MediaPipeWorker(ear_threshold=0.22, consecutive_frames=10)
     
     app = SentientEye(camera=my_camera, model=my_model)
     app.run()
