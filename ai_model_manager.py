@@ -5,6 +5,7 @@ from typing import List, Dict, Any
 from ultralytics import YOLO
 import RPi.GPIO as GPIO
 import time
+from send_open_or_closed import trimite_stare # Importul tău
 
 class YoloObjectDetector:
     def __init__(self, model_path: str = "yolov8n.pt", confidence_threshold: float = 0.50):
@@ -15,6 +16,9 @@ class YoloObjectDetector:
         self.running_state = False
         self.thread: threading.Thread | None = None
         
+        # --- NOU: Memorie pentru ultima stare ca să nu aglomerăm rețeaua ---
+        self.ultima_stare_trimisa = None 
+
     def start(self) -> None:
         self.change_running_state(True)
         self.thread = threading.Thread(target=self._worker_loop, daemon=True)
@@ -24,7 +28,6 @@ class YoloObjectDetector:
         self.change_running_state(False)
         if self.thread is not None:
             self.thread.join()
-        self.pwm_signal.stop()
         GPIO.cleanup()
 
     def _worker_loop(self) -> None:
@@ -39,24 +42,23 @@ class YoloObjectDetector:
             while self.running_state:
                 try:
                     frame = self.frame_queue.get(timeout=1)
-                    
-                    # --- MODIFICARE CRITICĂ AICI ---
-                    # Setăm conf=0.20 ca să nu mai filtreze scorurile de 0.30 sau 0.40 înainte să le vedem
                     results = model(frame, conf=0.50, verbose=False)
 
                     new_detection = []
+                    # Variabilă temporară pentru a vedea ce am găsit în acest cadru
+                    stare_curenta_detectata = None
+
                     for r in results:
                         for box in r.boxes:
                             confidence_score = float(box.conf[0])
                             nume_obiect = r.names[int(box.cls[0])]
 
-                            # --- AFIȘĂRI DISTINCTE PENTRU OPEN ȘI CLOSE ---
                             if nume_obiect == "open":
-                                print(f"🟢 [DETECȚIE] OPEN detectat | Încredere: {confidence_score:.2f}")
+                                print(f"🟢 [DETECȚIE] OPEN | Conf: {confidence_score:.2f}")
+                                stare_curenta_detectata = "1"
                             elif nume_obiect == "close":
-                                print(f"🔴 [DETECȚIE] CLOSE detectat | Încredere: {confidence_score:.2f}")
-                            else:
-                                print(f"⚪ [DETECȚIE] {nume_obiect} | Încredere: {confidence_score:.2f}")
+                                print(f"🔴 [DETECȚIE] CLOSE | Conf: {confidence_score:.2f}")
+                                stare_curenta_detectata = "0"
 
                             new_detection.append({
                                 "nume": nume_obiect,
@@ -64,9 +66,15 @@ class YoloObjectDetector:
                                 "confidence": confidence_score
                             })
 
-                            # Buzzer-ul se activează DOAR pentru "close" cu încredere > 0.40
-                            if nume_obiect == "close" and confidence_score > 0.60:
-                                pass
+                    # --- LOGICA DE NETWORKING ---
+                    # Trimitem doar dacă starea e diferită de ultima trimisă
+                    if stare_curenta_detectata is not None and stare_curenta_detectata != self.ultima_stare_trimisa:
+                        try:
+                            trimite_stare(stare_curenta_detectata)
+                            self.ultima_stare_trimisa = stare_curenta_detectata
+                            print(f"📡 [NETWORK] Flag {stare_curenta_detectata} trimis prin Ethernet.")
+                        except Exception as e:
+                            print(f"⚠️ [EROARE REȚEA] Nu s-a putut trimite: {e}")
 
                     self.current_detections = new_detection
 
