@@ -1,0 +1,28 @@
+DISPLAY=:0 python3 sentienteye_main.py 
+
+rm -rf venv
+python3 -m venv venv --system-site-packages
+source venv/bin/activate
+
+git clone https://github.com/nume_utilizator/nume_proiect.git
+
+sudo nano /etc/systemd/system/sentienteye.service
+
+sudo systemctl enable sentienteye
+sudo systemctl start sentienteye
+
+pip install ultralytics
+
+pip install -r requirements.txt
+pip uninstall opencv-python opencv-python-headless torch torchvision ultralytics -y
+
+sudo apt update
+sudo apt install python3-opencv python3-torch python3-torchvision -y
+
+
+
+FOARTE IMPORTANT: Trebuie să-i spunem lui pip să instaleze YOLO, dar să nu mai încerce să descarce și să înlocuiască OpenCV sau PyTorch, pentru că altfel stricăm totul la loc:
+
+Bash
+pip install ultralytics --no-deps
+(Flag-ul --no-deps îi zice "Instalează doar codul Python pentru Ultralytics, nu mai aduce și pachetele grele de care depinde, că le am deja de la sistem").
