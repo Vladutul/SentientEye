@@ -29,37 +29,37 @@ class SentientEye:
         self.start_components()
         self.set_running_state(True)
         
-        # Un mic delay pentru a lăsa camera să se stabilizeze (auto-exposure)
-        time.sleep(2)
-        
+        time.sleep(3)
+        print("--- RUNTIME: Sistemul rulează (Apasă ESC pentru ieșire) ---")
+
+        # 1. Creăm fereastra și o setăm pe Full Screen chiar de la început
         cv2.namedWindow("Sentient Eye", cv2.WINDOW_NORMAL)
         cv2.setWindowProperty("Sentient Eye", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
         try:
             while self.running_state:
+                # framel vine deja procesat și orientat corect din obiectul camerei
                 frame = self.camera.get_frame()
                 
-                if frame is None:
-                    continue
+                if frame is not None:
+                    # Dacă ecranul tău stă pe orizontală (landscape), s-ar putea să nu mai ai 
+                    # nevoie de rotația de 90 de grade. Dacă stă pe verticală, las-o.
+                    frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
 
-                # 1. Rotația - esențială dacă camera e montată fizic la 90 grade
-                frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
-
-                # 2. AI Inference
-                # Notă: Asigură-te că NcnnYoloDetector redimensionează intern la 320/640
-                self.model.push_frame(frame) 
-                detectii = self.model.get_detections()
-                
-                # 3. Desenăm pe frame-ul de rezoluție mare (pentru acuratețea liniilor)
-                if detectii:
+                    # Trimitem frame-ul la modelul AI înainte de resize 
+                    # (pentru ca AI-ul să proceseze imaginea la calitatea ei originală)
+                    self.model.push_frame(frame.copy())
+                    detectii = self.model.get_detections()
                     self._draw_detections(frame, detectii)
-                
-                # 4. Resize final pentru display-ul de 800x480
-                display_frame = cv2.resize(frame, (800, 480))
-                
-                cv2.imshow("Sentient Eye", display_frame)
+                    
+                    # --- STRETCH PE TOATĂ SUPRAFAȚA ECRANULUI ---
+                    # Forțăm rezoluția la 800 lățime și 480 înălțime
+                    frame = cv2.resize(frame, (800, 480))
+                    
+                    cv2.imshow("Sentient Eye", frame)
 
-                if cv2.waitKey(1) & 0xFF == 27: # ESC
+                if cv2.waitKey(1) & 0xFF == 27:
+                    self.set_running_state(False)
                     break
         finally:
             self.cleanup()
@@ -91,24 +91,17 @@ class SentientEye:
 
 # 3. Asamblarea aplicației se face la exterior (Compozitie)
 if __name__ == "__main__":
-    from camera_manager import PiCamera 
-    from ai_model_manager_ncnn import NcnnYoloDetector
+    from camera_manager import PiCamera # Implementarea concretă
+    from ai_model_manager import YoloObjectDetector     # Implementarea concretă
     
-    PARAM_PATH = "face_model_ncnn_model/model.ncnn.param" 
-    BIN_PATH = "face_model_ncnn_model/model.ncnn.bin"
+    MODEL_PATH = "face_model_ncnn_model"
+
+    # Aici poți schimba ușor cu:
+    # camera = IpCameraManager("192.168.1.100")
+    # model = MediaPipeWorker()
     
-    # 2. Instanțiem camera
     my_camera = PiCamera(width=1920, height=1080, inverted_state=True)
+    my_model = YoloObjectDetector(model_path=MODEL_PATH, confidence_threshold=0.15)
     
-    # 3. Instanțiem modelul brut NCNN
-    my_model = NcnnYoloDetector(
-        param_path=PARAM_PATH, 
-        bin_path=BIN_PATH, 
-        input_size=640,  # Pune 320 aici dacă ai exportat modelul la 320x320 cum am discutat!
-        confidence_threshold=0.50,
-        buzzer_pin=13
-    )
-    
-    # 4. Injectăm și rulăm aplicația (Nu se schimbă absolut nimic în logica SentientEye!)
     app = SentientEye(camera=my_camera, model=my_model)
     app.run()
