@@ -94,14 +94,14 @@ if __name__ == "__main__":
     from camera_manager import PiCamera # Implementarea concretă
     from ai_model_manager import YoloObjectDetector     # Implementarea concretă
     
-    MODEL_PATH = "face_model.pt" # Asigură-te că ai modelul în același folder sau specifică calea corectă
+    MODEL_PATH = "face_model_ncnn_model"
 
     # Aici poți schimba ușor cu:
     # camera = IpCameraManager("192.168.1.100")
     # model = MediaPipeWorker()
     
-    my_camera = PiCamera(width=1920, height=1080, inverted_state=True)
-    my_model = YoloObjectDetector(model_path=MODEL_PATH, confidence_threshold=0.20)
+    my_camera = PiCamera(width=1200, height=600, inverted_state=True)
+    my_model = YoloObjectDetector(model_path=MODEL_PATH, confidence_threshold=0.50)
     
     app = SentientEye(camera=my_camera, model=my_model)
     app.run()
