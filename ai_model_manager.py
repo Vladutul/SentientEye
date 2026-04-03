@@ -38,40 +38,45 @@ class YoloObjectDetector:
         GPIO.cleanup()
 
     def _worker_loop(self) -> None:
-        print("[YOLO] Încarc modelul pe nucleele hardware...")
-        model = YOLO(self.model_path)
-        print("[YOLO] Pregătit pentru analiză!")
-
-        while self.running_state:
+            print("[YOLO] Încarc modelul pe nucleele hardware...")
             try:
-                frame = self.frame_queue.get(timeout=1)
-                
-                # --- NOU: imgsz=320 va forța analizarea la o rezoluție mai mică, crescând FPS-ul ---
-                results = model(frame, conf=self.confidence_threshold, imgsz=320, verbose=False)
+                model = YOLO(self.model_path)
+                print("[YOLO] Pregătit pentru analiză!")
+            except Exception as e:
+                print(f"[EROARE FATALĂ YOLO] Modelul nu s-a putut încărca: {e}")
+                return
 
-                new_detection = []
-                for r in results:
-                    for box in r.boxes:
-                        confidence_score = float(box.conf[0])
-                        nume_obiect = r.names[int(box.cls[0])]
+            while self.running_state:
+                try:
+                    frame = self.frame_queue.get(timeout=1)
+                    
+                    # Am scos temporar imgsz=320 pentru a vedea dacă el cauza blocajul
+                    results = model(frame, conf=self.confidence_threshold, verbose=False)
 
-                        # Afișează numele și încrederea (formatată la 2 zecimale)
-                        print(f"[DETECȚIE] Obiect: {nume_obiect} | Încredere: {confidence_score:.2f}")
+                    new_detection = []
+                    for r in results:
+                        for box in r.boxes:
+                            confidence_score = float(box.conf[0])
+                            nume_obiect = r.names[int(box.cls[0])]
 
-                        new_detection.append({
-                            "nume": nume_obiect,
-                            "coord": box.xyxy[0].cpu().numpy().astype(int),
-                            "confidence": confidence_score
-                        })
+                            print(f"[DETECȚIE] Obiect: {nume_obiect} | Încredere: {confidence_score:.2f}")
 
-                        # Dacă detectează "close" CU încredere > 0.30
-                        if nume_obiect == "close" and confidence_score > 0.30:
-                            self._buzz_for_duration(1.0)
+                            new_detection.append({
+                                "nume": nume_obiect,
+                                "coord": box.xyxy[0].cpu().numpy().astype(int),
+                                "confidence": confidence_score
+                            })
 
-                self.current_detections = new_detection
+                            if nume_obiect == "close" and confidence_score > 0.30:
+                                self._buzz_for_duration(1.0)
 
-            except queue.Empty:
-                continue
+                    self.current_detections = new_detection
+
+                except queue.Empty:
+                    continue
+                except Exception as e:
+                    # AICI ESTE CHEIA: Prindem orice eroare care ar putea opri thread-ul silențios
+                    print(f"\n[EROARE ÎN THREAD-UL DE ANALIZĂ] -> {e}\n")
 
     def push_frame(self, frame: np.ndarray) -> None:
         try:
