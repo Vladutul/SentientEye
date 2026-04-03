@@ -131,7 +131,7 @@ class NcnnYoloDetector:
                         })
 
                         # Buzzer-ul se activează DOAR pentru "close" cu încredere > 0.40
-                        if nume_obiect == "close" and confidence_score > 0.40:
+                        if nume_obiect == "close" and confidence_score > 0.30:
                             self._buzz_for_duration(1.0)
 
                 self.current_detections = new_detection
