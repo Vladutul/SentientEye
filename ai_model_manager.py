@@ -48,8 +48,14 @@ class YoloObjectDetector:
                 for r in results:
                     for box in r.boxes:
                         confidence_score = float(box.conf[0])
+                        nume_obiect = r.names[int(box.cls[0])]
+
+                        # ---> PRINT-UL ADĂUGAT AICI <---
+                        # Afișează numele și încrederea (formatată la 2 zecimale)
+                        print(f"[DETECȚIE] Obiect: {nume_obiect} | Încredere: {confidence_score:.2f}")
+
                         new_detection.append({
-                            "nume": r.names[int(box.cls[0])],
+                            "nume": nume_obiect,
                             "coord": box.xyxy[0].cpu().numpy().astype(int),
                             "confidence": confidence_score
                         })
@@ -76,7 +82,11 @@ class YoloObjectDetector:
         self.running_state = state
 
     def _buzz_for_duration(self, duration: float):
-        """Activează buzzerul pentru o perioadă scurtă."""
-        self.pwm_signal.ChangeDutyCycle(50)  # Pornim buzzerul
-        time.sleep(duration)
-        self.pwm_signal.ChangeDutyCycle(0)   # Oprim buzzerul
+        """Activează buzzerul pentru o perioadă scurtă pe un thread separat pentru a nu bloca detectia YOLO."""
+        def beep_task():
+            self.pwm_signal.ChangeDutyCycle(50)  # Pornim buzzerul
+            time.sleep(duration)
+            self.pwm_signal.ChangeDutyCycle(0)   # Oprim buzzerul
+            
+        # Lansăm funcția de beep într-un thread separat (nu blochează bucla principală)
+        threading.Thread(target=beep_task, daemon=True).start()
