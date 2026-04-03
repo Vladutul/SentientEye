@@ -84,10 +84,8 @@ class NcnnYoloDetector:
                 # 2. INFERENȚA
                 ex = net.create_extractor()
                 
-                # ATENȚIE: Numele "images" și "output" pot diferi în funcție de cum ai exportat modelul.
-                # Deschide fișierul .param cu un text editor pentru a vedea numele exact al layer-ului de input și output.
-                ex.input("images", mat_in) 
-                ret, mat_out = ex.extract("output") 
+                ex.input("in0", mat_in) 
+                ret, mat_out = ex.extract("out0")
 
                 # 3. PROCESAREA REZULTATELOR
                 new_detection = []
