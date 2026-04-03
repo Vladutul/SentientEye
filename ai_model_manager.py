@@ -50,8 +50,9 @@ class YoloObjectDetector:
                 try:
                     frame = self.frame_queue.get(timeout=1)
                     
-                    # Am scos temporar imgsz=320 pentru a vedea dacă el cauza blocajul
-                    results = model(frame, conf=self.confidence_threshold, verbose=False)
+                    # --- MODIFICARE CRITICĂ AICI ---
+                    # Setăm conf=0.20 ca să nu mai filtreze scorurile de 0.30 sau 0.40 înainte să le vedem
+                    results = model(frame, conf=0.20, verbose=False)
 
                     new_detection = []
                     for r in results:
@@ -59,7 +60,13 @@ class YoloObjectDetector:
                             confidence_score = float(box.conf[0])
                             nume_obiect = r.names[int(box.cls[0])]
 
-                            print(f"[DETECȚIE] Obiect: {nume_obiect} | Încredere: {confidence_score:.2f}")
+                            # --- AFIȘĂRI DISTINCTE PENTRU OPEN ȘI CLOSE ---
+                            if nume_obiect == "open":
+                                print(f"🟢 [DETECȚIE] OPEN detectat | Încredere: {confidence_score:.2f}")
+                            elif nume_obiect == "close":
+                                print(f"🔴 [DETECȚIE] CLOSE detectat | Încredere: {confidence_score:.2f}")
+                            else:
+                                print(f"⚪ [DETECȚIE] {nume_obiect} | Încredere: {confidence_score:.2f}")
 
                             new_detection.append({
                                 "nume": nume_obiect,
@@ -67,7 +74,8 @@ class YoloObjectDetector:
                                 "confidence": confidence_score
                             })
 
-                            if nume_obiect == "close" and confidence_score > 0.30:
+                            # Buzzer-ul se activează DOAR pentru "close" cu încredere > 0.40
+                            if nume_obiect == "close" and confidence_score > 0.40:
                                 self._buzz_for_duration(1.0)
 
                     self.current_detections = new_detection
@@ -75,7 +83,6 @@ class YoloObjectDetector:
                 except queue.Empty:
                     continue
                 except Exception as e:
-                    # AICI ESTE CHEIA: Prindem orice eroare care ar putea opri thread-ul silențios
                     print(f"\n[EROARE ÎN THREAD-UL DE ANALIZĂ] -> {e}\n")
 
     def push_frame(self, frame: np.ndarray) -> None:
