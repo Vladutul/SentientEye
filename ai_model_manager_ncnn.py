@@ -112,12 +112,12 @@ class NcnnYoloDetector:
                         nume_obiect = self.class_names.get(label_id, f"Clasa_{label_id}")
 
                         # --- AFIȘĂRI DISTINCTE ---
-                        if nume_obiect == "open":
-                            print(f"🟢 [NCNN] OPEN detectat | Încredere: {confidence_score:.2f}")
-                        elif nume_obiect == "close":
-                            print(f"🔴 [NCNN] CLOSE detectat | Încredere: {confidence_score:.2f}")
-                        else:
-                            print(f"⚪ [NCNN] {nume_obiect} | Încredere: {confidence_score:.2f}")
+                        #if nume_obiect == "open":
+                        #    print(f"🟢 [NCNN] OPEN detectat | Încredere: {confidence_score:.2f}")
+                        #elif nume_obiect == "close":
+                        #    print(f"🔴 [NCNN] CLOSE detectat | Încredere: {confidence_score:.2f}")
+                        #else:
+                        #    print(f"⚪ [NCNN] {nume_obiect} | Încredere: {confidence_score:.2f}")
 
                         new_detection.append({
                             "nume": nume_obiect,
