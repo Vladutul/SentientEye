@@ -109,6 +109,11 @@ class NcnnYoloDetector:
                         x2 = int(values[4] * w_orig / self.input_size)
                         y2 = int(values[5] * h_orig / self.input_size)
 
+                        x1 = max(0, min(x1, w_orig - 1))
+                        y1 = max(0, min(y1, h_orig - 1))
+                        x2 = max(0, min(x2, w_orig - 1))
+                        y2 = max(0, min(y2, h_orig - 1))
+
                         nume_obiect = self.class_names.get(label_id, f"Clasa_{label_id}")
 
                         # --- AFIȘĂRI DISTINCTE ---
