@@ -94,7 +94,7 @@ if __name__ == "__main__":
     from camera_manager import PiCamera # Implementarea concretă
     from ai_model_manager import YoloObjectDetector     # Implementarea concretă
     
-    MODEL_PATH = "_assets/face_model.pt"
+    MODEL_PATH = "face_model.pt"
 
     # Aici poți schimba ușor cu:
     # camera = IpCameraManager("192.168.1.100")
