@@ -50,7 +50,6 @@ class YoloObjectDetector:
                         confidence_score = float(box.conf[0])
                         nume_obiect = r.names[int(box.cls[0])]
 
-                        # ---> PRINT-UL ADĂUGAT AICI <---
                         # Afișează numele și încrederea (formatată la 2 zecimale)
                         print(f"[DETECȚIE] Obiect: {nume_obiect} | Încredere: {confidence_score:.2f}")
 
@@ -60,8 +59,9 @@ class YoloObjectDetector:
                             "confidence": confidence_score
                         })
 
-                        # Dacă detectează ceva cu confidence > 0.6 → buzzer 1 sec
-                        if confidence_score > 0.6:
+                        # ---> LOGICA NOUĂ PENTRU BUZZER <---
+                        # Se activează DOAR dacă detectează "close" CU încredere > 0.40
+                        if nume_obiect == "close" and confidence_score > 0.40:
                             self._buzz_for_duration(1.0)
 
                 self.current_detections = new_detection
