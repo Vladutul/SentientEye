@@ -7,7 +7,7 @@ import RPi.GPIO as GPIO
 import time
 
 class YoloObjectDetector:
-    def __init__(self, model_path: str = "yolov8n.pt", confidence_threshold: float = 0.20, buzzer_pin: int = 13):
+    def __init__(self, model_path: str = "yolov8n.pt", confidence_threshold: float = 0.50, buzzer_pin: int = 13):
         self.model_path = model_path
         self.confidence_threshold = confidence_threshold
         self.frame_queue = queue.Queue(maxsize=1)
