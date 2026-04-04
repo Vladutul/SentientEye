@@ -84,7 +84,7 @@ if __name__ == "__main__":
     
     MODEL_PATH = "face_model_ncnn_model"
     
-    my_camera = USBCamera(width=640, height=480, inverted_state=True, device_index=0)
+    my_camera = USBCamera(width=640, height=480, inverted_state=True, device_index=1)
     
     #my_camera = PiCamera(width=800, height=1000, inverted_state=True)
     my_model = YoloObjectDetector(model_path=MODEL_PATH, confidence_threshold=0.30)
