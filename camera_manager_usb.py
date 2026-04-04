@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 class USBCamera:
-    def __init__(self, width: int = 640, height: int = 480, inverted_state: bool = False, device_index: int = 0):
+    def __init__(self, width: int = 640, height: int = 480, inverted_state: bool = False, device_index: int = 1):
         self.inverted_state = inverted_state
         self.device_index = device_index
         self.width = width
