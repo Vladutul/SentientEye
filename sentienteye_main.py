@@ -79,7 +79,7 @@ class SentientEye:
 
 if __name__ == "__main__":
     from camera_manager import PiCamera
-    from camera_manager import USBCamera
+    from camera_manager_usb import USBCamera
     from ai_model_manager import YoloObjectDetector
     
     MODEL_PATH = "face_model_ncnn_model"
