@@ -2,11 +2,14 @@ import cv2
 import time
 from typing import Protocol, List, Dict, Any
 
+# 1. Definim "Contractele" (Interfețele)
+# Orice cameră viitoare va trebui să respecte această structură
 class ICamera(Protocol):
     def start(self) -> None: ...
     def stop(self) -> None: ...
     def get_frame(self) -> Any: ...
 
+# Orice model de AI viitor va trebui să respecte această structură
 class IModelWorker(Protocol):
     def start(self) -> None: ...
     def stop(self) -> None: ...
@@ -36,11 +39,9 @@ class SentientEye:
                 
                 if frame is not None:
                     frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
-
                     self.model.push_frame(frame.copy())
                     detectii = self.model.get_detections()
                     self._draw_detections(frame, detectii)
-                    
                     frame = cv2.resize(frame, (800, 480))
                     
                     cv2.imshow("Sentient Eye", frame)
@@ -52,6 +53,7 @@ class SentientEye:
             self.cleanup()
 
     def _draw_detections(self, frame, detections):
+        """O metodă separată doar pentru desenare (Single Responsibility)"""
         for obiect in detections:
             x1, y1, x2, y2 = obiect["coord"]
             nume = obiect["nume"]
@@ -77,11 +79,14 @@ class SentientEye:
 
 if __name__ == "__main__":
     from camera_manager import PiCamera
+    from camera_manager import USBCamera
     from ai_model_manager import YoloObjectDetector
     
     MODEL_PATH = "face_model_ncnn_model"
     
-    my_camera = PiCamera(width=800, height=1000, inverted_state=True)
+    my_camera = USBCamera(width=640, height=480, inverted_state=True, device_index=0)
+    
+    #my_camera = PiCamera(width=800, height=1000, inverted_state=True)
     my_model = YoloObjectDetector(model_path=MODEL_PATH, confidence_threshold=0.30)
     
     app = SentientEye(camera=my_camera, model=my_model)
