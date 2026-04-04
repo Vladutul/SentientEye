@@ -16,7 +16,6 @@ class YoloObjectDetector:
         self.running_state = False
         self.thread: threading.Thread | None = None
         
-        # --- NOU: Memorie pentru ultima stare ca să nu aglomerăm rețeaua ---
         self.ultima_stare_trimisa = None 
 
     def start(self) -> None:
@@ -66,8 +65,6 @@ class YoloObjectDetector:
                                 "confidence": confidence_score
                             })
 
-                    # --- LOGICA DE NETWORKING ---
-                    # Trimitem doar dacă starea e diferită de ultima trimisă
                     if stare_curenta_detectata is not None and stare_curenta_detectata != self.ultima_stare_trimisa:
                         try:
                             trimite_stare(stare_curenta_detectata)

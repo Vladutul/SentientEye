@@ -7,7 +7,6 @@ class PiCamera:
         self.inverted_state = inverted_state
         self.picam2 = Picamera2()
         
-        # 1. Setăm formatul BGR888 pentru a fi compatibil cu cv2.imshow
         config = self.picam2.create_preview_configuration(
             main={"size": (width, height), "format": "BGR888"} 
         )
@@ -27,7 +26,6 @@ class PiCamera:
         self.picam2.stop()
 
     def get_frame(self) -> np.ndarray:
-        # Preluăm frame-ul (vine direct BGR din config)
         frame = self.picam2.capture_array("main")
 
         if self.inverted_state:
